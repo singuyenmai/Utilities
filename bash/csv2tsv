@@ -1,0 +1,114 @@
+#!/bin/bash
+
+####################
+# Author: Si-Nguyen Mai
+# Last update: May 12, 2020
+# Function: Convert CSV to TSV file, unquoting text within double quotes
+# Input: CSV file
+# Output: TSV file (new file)
+####################
+
+####################
+# Help message
+####################
+help_message="Convert CSV to TSV file, unquoting text within double quotes.\n\n
+\tUsage: csv2tsv [-h][--help] [-i][--input] CSV FILE [-o][--output] TSV FILE"
+
+####################
+# Get user inputs
+####################
+# parameters
+declare in
+declare out
+declare out_present=1
+
+# handle empty input
+if [[ $# -eq 0 ]]; then
+    echo "$0: A single input file is required."
+    exit 1
+fi
+
+# -allow a command to fail with !’s side effect on errexit
+# -use return value from ${PIPESTATUS[0]}, because ! hosed $?
+! getopt --test > /dev/null 
+if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+    echo 'Sorry, `getopt --test` failed in this environment.'
+    exit 2
+fi
+
+OPTIONS=hi:o:
+LONGOPTS=help,input:,output:
+
+# -regarding ! and PIPESTATUS see above
+# -temporarily store output to be able to check for errors
+# -activate quoting/enhanced mode (e.g. by writing out “--options”)
+# -pass arguments only via   -- "$@"   to separate them correctly
+! PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")
+if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+    # e.g. return value is 1
+    #  then getopt has complained about wrong arguments to stdout
+    echo -e "\n""$help_message";
+    exit 3
+fi
+# read getopt’s output this way to handle the quoting right:
+eval set -- "$PARSED"
+
+# now enjoy the options in order and nicely split until we see --
+while true; do
+    case "$1" in
+        -h|--help) 
+            echo -e $help_message
+            exit 3
+            ;;
+        -i|--input)
+            in="$2"
+            shift 2
+            ;;
+        -o|--output)
+            out="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            printf "$0:$LINENO: %s\n" "script error: unhandled argument"
+            exit 4
+            ;;
+    esac
+done
+
+# handle implicit argument for input
+if [ -z "$in" ]; then
+	if [ "$1" ]; then
+		in="$1";
+	else
+		echo "$0: A single input file is required.";
+    	exit 5;
+	fi;
+fi
+
+# handle implicit argument for output
+if [ -z "$out" ]; then
+	if [ "$2" ]; then
+		out="$2";
+	else
+		out_present=0;
+	fi;
+fi
+
+####################
+# Convert
+####################
+
+convert() {
+	sed -E 's/("([^"]*)")?,/\2\t/g' "$1"
+}
+export -f convert
+
+if [ $out_present -eq 1 ]; then
+	convert "$in" > "$out";
+else
+	convert "$in";
+fi
