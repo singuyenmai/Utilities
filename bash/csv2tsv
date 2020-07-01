@@ -2,10 +2,11 @@
 
 ####################
 # Author: Si-Nguyen Mai
-# Last update: May 12, 2020
+# Last update: July 01, 2020
 # Function: Convert CSV to TSV file, unquoting text within double quotes
 # Input: CSV file
 # Output: TSV file (new file)
+# Cannot handle input: A,,C,"D,E,F","G",I,"K,L,M","Z,A" => "Z,A" will be converted as Z	A instead of Z,A
 ####################
 
 ####################
@@ -103,7 +104,7 @@ fi
 ####################
 
 convert() {
-	sed -E 's/("([^"]*)")?,/\2\t/g' "$1"
+	sed -E -e 's/("([^"]*)")?,/\2\t/g' -e 's/\t"([^"]*)"$/\t\1/' "$1"
 }
 export -f convert
 
