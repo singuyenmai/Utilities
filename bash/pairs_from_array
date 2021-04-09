@@ -1,0 +1,42 @@
+#!/bin/bash 
+
+####################
+# Author: Si-Nguyen Mai
+# Last update: April 09, 2021
+# Function: Create 2-member pairs from an array of members 
+# Input: bash array of members
+# Output: printing out 2-member pairs. Within each pair, members are separated by "_&_"
+# Note: script must be run in the current shell environment since bash doesn't export array variables to child processes
+####################
+
+####################
+# Get user inputs
+####################
+# parameters
+
+# arr_in=($1) # works if script is run in a subshell, but all input array elements should be provided
+
+declare -n arr_in=$1
+
+if [ $2 ]; then # name for output array is provided
+    declare -n arr_out=$2;
+fi
+
+N=${#arr_in[@]} # length of input array
+
+for i in ${!arr_in[@]}; do
+
+    s=$(echo $i + 1 | bc); 
+
+    for (( j=$s; j<$N; j++ )); do 
+    
+        pair=${arr_in[$i]}"_&_"${arr_in[$j]};  
+        echo $pair;
+        
+        if [ $2 ]; then
+            arr_out+=($pair);
+        fi;
+        
+    done; 
+
+done
